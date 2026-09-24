@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPM SD Generator - berguru.id</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Font: Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            berguru: '#11009e',
+            'berguru-dark': '#0d007a',
+            'berguru-light': '#3322c4'
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f6f9;
+    }
+    
+    /* Styling Khusus Dokumen Cetak A4 */
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      padding-top: 1.0cm;
+      padding-bottom: 1.0cm;
+      padding-left: 1.5cm;
+      padding-right: 1.0cm;
+      margin: 0 auto;
+      background: #ffffff;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+    }
+
+    .rpm-doc-title {
+      text-align: center;
+      font-weight: 700;
+      font-size: 13pt;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      color: #11009e;
+      border-bottom: 2px solid #11009e;
+      padding-bottom: 4px;
+    }
+
+    .rpm-meta-table, .rpm-activities-table, .rpm-signature-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+      font-size: 9.5pt;
+    }
+
+    .rpm-meta-table td {
+      padding: 3px 6px;
+      vertical-align: top;
+    }
+
+    .rpm-section-header {
+      background-color: #11009e;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 10.5pt;
+      padding: 4px 8px;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      border-radius: 2px;
+    }
+
+    .rpm-activities-table th, .rpm-activities-table td {
+      border: 1px solid #cbd5e1;
+      padding: 6px;
+      vertical-align: top;
+    }
+
+    .rpm-activities-table th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .rpm-signature-table {
+      margin-top: 25px;
+      page-break-inside: avoid;
+    }
+
+    .rpm-signature-table td {
+      text-align: center;
+      width: 50%;
+      vertical-align: top;
+    }
+
+    .rpm-footer-tag {
+      text-align: right;
+      font-size: 8.5pt;
+      color: #64748b;
+      margin-top: 15px;
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 4px;
+      font-style: italic;
+    }
+
+    /* Media Print */
+    @media print {
+      body {
+        background: #ffffff;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .a4-page {
+        box-shadow: none;
+        margin: 0;
+        width: 100%;
+        padding-top: 1.0cm;
+        padding-bottom: 1.0cm;
+        padding-left: 1.5cm;
+        padding-right: 1.0cm;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Spinner Loading Overlay -->
+  <div id="loadingSpinner" class="fixed inset-0 bg-black/50 z-50 flex flex-col items-center justify-center hidden">
+    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"></div>
+    <p class="text-white mt-4 font-medium text-sm">Memproses data, mohon tunggu...</p>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-full transition-transform duration-300 ease-in-out max-w-sm w-full bg-white shadow-xl rounded-lg border-l-4 border-berguru p-4 hidden">
+    <div class="flex items-start">
+      <div class="ml-3 w-0 flex-1">
+        <p id="toastTitle" class="text-sm font-semibold text-gray-900"></p>
+        <p id="toastMessage" class="mt-1 text-xs text-gray-600"></p>
+      </div>
+      <button onclick="closeToast()" class="ml-4 text-gray-400 hover:text-gray-600">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Container Utama -->
+  <div class="flex-grow flex flex-col">
+
+    <!-- 1. HALAMAN LOGIN / REGISTER -->
+    <div id="authContainer" class="flex-grow flex items-center justify-center p-4">
+      <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+        
+        <!-- Logo Resmi berguru.id -->
+        <div class="text-center mb-6">
+          <img src="https://i.ibb.co.com/1Yd2Dpc7/Logo-Berguru-id.png" 
+               onerror="this.onerror=null; this.src='https://ibb.co.com/1Yd2Dpc7';" 
+               alt="Logo berguru.id" 
+               class="h-16 mx-auto mb-3 object-contain">
+          <h1 class="text-2xl font-bold text-berguru">RPM SD Generator</h1>
+          <p class="text-xs text-gray-500 mt-1">Buat RPM Kurikulum Merdeka Lebih Mudah</p>
+        </div>
+
+        <!-- Tab Navigasi Auth -->
+        <div class="flex border-b border-gray-200 mb-6">
+          <button id="tabLogin" onclick="switchAuthTab('login')" class="w-1/2 py-2 text-center text-sm font-semibold border-b-2 border-berguru text-berguru">
+            Masuk (Login)
+          </button>
+          <button id="tabRegister" onclick="switchAuthTab('register')" class="w-1/2 py-2 text-center text-sm font-semibold text-gray-400 hover:text-berguru">
+            Dapatkan Token
+          </button>
+        </div>
+
+        <!-- Form Login -->
+        <form id="formLogin" onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Username / Email Admin</label>
+            <input type="text" id="loginUsername" required placeholder="contoh: nama@berguru.id" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-berguru">
+            <span class="text-[10px] text-gray-400">Gunakan username berakhiran @berguru.id</span>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Token Akses (5 Digit)</label>
+            <input type="password" id="loginToken" maxlength="10" required placeholder="Masukkan 5 digit token" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-berguru">
+          </div>
+          <button type="submit" class="w-full py-2.5 bg-berguru hover:bg-berguru-dark text-white rounded-lg font-semibold text-sm transition shadow-md">
+            Masuk Aplikasi
+          </button>
+          <div class="text-center mt-3">
+            <a href="mailto:berguruid.official@gmail.com?subject=Bantuan%20Token%20RPM%20SD%20Generator" class="text-xs text-berguru hover:underline font-medium">Lupa Token / Kendala Masuk? Hubungi Admin</a>
+          </div>
+        </form>
+
+        <!-- Form Register -->
+        <form id="formRegister" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Email Pribadi Aktif</label>
+            <input type="email" id="regEmail" required placeholder="contoh: guru@gmail.com" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-berguru">
+            <span class="text-[10px] text-gray-500 mt-1 block">1 Email hanya diizinkan untuk 1 Username.</span>
+          </div>
+          <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-sm transition shadow-md">
+            Dapatkan Token Akses
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+    <!-- 2. APPS MAIN CONTAINER (Setelah Login) -->
+    <div id="mainAppContainer" class="hidden flex-grow flex flex-col">
+      
+      <!-- Top Bar Header -->
+      <header class="bg-berguru text-white shadow-md no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div class="flex items-center space-x-3">
+            <img src="https://i.ibb.co.com/1Yd2Dpc7/Logo-Berguru-id.png" 
+                 onerror="this.onerror=null; this.src='https://ibb.co.com/1Yd2Dpc7';" 
+                 alt="Logo" 
+                 class="h-9 w-auto bg-white p-1 rounded">
+            <div>
+              <h2 class="font-bold text-base leading-none">RPM SD Generator</h2>
+              <span class="text-[10px] text-blue-200">Kurikulum Merdeka - Deep Learning</span>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4">
+            <div class="text-right hidden sm:block">
+              <p id="navUserDisplay" class="text-xs font-semibold"></p>
+              <p id="navRoleDisplay" class="text-[10px] text-blue-200 uppercase tracking-wider"></p>
+            </div>
+            <button onclick="handleLogout()" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium">
+              Keluar
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- DASHBOARD ADMIN -->
+        <div id="adminView" class="hidden space-y-6">
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-gray-800">Dashboard Panel Admin</h3>
+                <p class="text-xs text-gray-500">Kelola database akun pengguna dan token akses</p>
+              </div>
+              <button onclick="loadAdminDashboard()" class="bg-berguru text-white text-xs px-3 py-2 rounded-lg font-medium hover:bg-berguru-dark">
+                Refresh Data
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-gray-100 text-gray-700 uppercase font-semibold">
+                    <th class="p-3 border-b">No</th>
+                    <th class="p-3 border-b">Mulai Terdaftar</th>
+                    <th class="p-3 border-b">Nama User</th>
+                    <th class="p-3 border-b">Sekolah</th>
+                    <th class="p-3 border-b">Username (@berguru.id)</th>
+                    <th class="p-3 border-b">Token</th>
+                    <th class="p-3 border-b">Status</th>
+                    <th class="p-3 border-b text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="adminTableBody" class="divide-y divide-gray-200">
+                  <!-- Dynamic Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM GENERATOR RPM (USER VIEW) -->
+        <div id="userView" class="hidden space-y-6">
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h3 class="text-lg font-bold text-berguru mb-1">Formulir Penyusunan RPM Kurikulum Merdeka</h3>
+            <p class="text-xs text-gray-500 mb-6">Pendekatan Pembelajaran Mendalam (Mindful, Meaningful, Joyful Learning)</p>
+
+            <form id="formRPM" onsubmit="handleGenerateRPM(event)" class="space-y-6">
+              
+              <!-- Section 1: Identitas Sekolah & Guru -->
+              <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 class="text-xs font-bold text-gray-700 uppercase mb-3 text-berguru">1. Identitas Sekolah & Guru</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Nama Instansi / Sekolah *</label>
+                    <input type="text" id="inputSekolah" required readonly class="w-full px-3 py-2 text-xs bg-gray-100 border border-gray-300 rounded-lg cursor-not-allowed font-semibold">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Nama Guru *</label>
+                    <input type="text" id="inputNamaGuru" required readonly class="w-full px-3 py-2 text-xs bg-gray-100 border border-gray-300 rounded-lg cursor-not-allowed font-semibold">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">NIP Guru</label>
+                    <input type="text" id="inputNipGuru" placeholder="Isi - jika belum ada" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Nama Kepala Sekolah *</label>
+                    <input type="text" id="inputNamaKepala" required placeholder="Nama Lengkap & Gelar" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">NIP Kepala Sekolah</label>
+                    <input type="text" id="inputNipKepala" placeholder="Isi - jika belum ada" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Alokasi Waktu</label>
+                    <input type="text" id="inputAlokasi" value="2 x 35 Menit (1 Pertemuan)" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 2: Kurikulum & Pembelajaran -->
+              <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 class="text-xs font-bold text-gray-700 uppercase mb-3 text-berguru">2. Target Pembelajaran</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Pilihan Fase *</label>
+                    <select id="selectFase" onchange="handleFaseChange()" required class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru">
+                      <option value="">-- Pilih Fase --</option>
+                      <option value="Fase A">Fase A (Kelas 1 - 2)</option>
+                      <option value="Fase B">Fase B (Kelas 3 - 4)</option>
+                      <option value="Fase C">Fase C (Kelas 5 - 6)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Pilihan Kelas *</label>
+                    <select id="selectKelas" required class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru">
+                      <option value="">-- Pilih Kelas --</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Mata Pelajaran *</label>
+                    <select id="selectMapel" onchange="updateCPInfo()" required class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru">
+                      <option value="">-- Pilih Mata Pelajaran --</option>
+                      <option value="Pendidikan Agama dan Budi Pekerti (PAI)">Pendidikan Agama dan Budi Pekerti (PAI)</option>
+                      <option value="Pendidikan Pancasila">Pendidikan Pancasila</option>
+                      <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                      <option value="Matematika">Matematika</option>
+                      <option value="IPAS">IPAS</option>
+                      <option value="Seni Budaya">Seni Budaya</option>
+                      <option value="PJOK">PJOK</option>
+                      <option value="Bahasa Inggris">Bahasa Inggris</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Info CP Acuan -->
+                <div id="cpInfoBadge" class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900 mb-4 hidden">
+                  <span class="font-bold">Landasan Capaian Pembelajaran (CP):</span>
+                  <p id="cpInfoText" class="mt-0.5"></p>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Topik / Materi Pembelajaran *</label>
+                  <textarea id="inputTopik" required rows="3" placeholder="Masukkan materi spesifik yang akan diajarkan..." class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru"></textarea>
+                </div>
+              </div>
+
+              <div class="flex justify-end">
+                <button type="submit" class="px-6 py-2.5 bg-berguru hover:bg-berguru-dark text-white rounded-lg text-xs font-semibold shadow-md transition flex items-center space-x-2">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  <span>Buat Pratinjau RPM (Pratinjau Dokumen)</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL POPUP FIRST TIME PROFILE (NAMA & SEKOLAH PERMANEN) -->
+  <div id="modalProfile" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-100">
+      <h3 class="text-base font-bold text-berguru mb-1">Lengkapi Profil Pengguna</h3>
+      <p class="text-xs text-gray-500 mb-4">Data ini akan tercantum secara otomatis pada setiap dokumen RPM yang Anda buat dan tidak dapat diubah kembali secara mandiri.</p>
+
+      <form onsubmit="handleSaveProfile(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Pengguna (Guru) *</label>
+          <input type="text" id="profNamaGuru" required placeholder="Nama Lengkap beserta Gelar" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Sekolah / Instansi *</label>
+          <input type="text" id="profNamaSekolah" required placeholder="Contoh: SD Negeri 1 Merdeka" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-1 focus:ring-berguru">
+        </div>
+        <button type="submit" class="w-full py-2 bg-berguru hover:bg-berguru-dark text-white rounded-lg text-xs font-semibold transition">
+          Simpan Profil Permanen
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT ADMIN USER -->
+  <div id="modalEditUser" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+      <h3 class="text-base font-bold text-gray-800 mb-4">Edit Data Pengguna</h3>
+      <form onsubmit="handleAdminSaveUser(event)" class="space-y-3">
+        <input type="hidden" id="editRowIndex">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Status Akun</label>
+          <select id="editStatus" class="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg">
+            <option value="Aktif">Aktif</option>
+            <option value="Nonaktif">Nonaktif</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Nama Guru</label>
+          <input type="text" id="editNamaGuru" class="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Nama Sekolah</label>
+          <input type="text" id="editNamaSekolah" class="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeEditModal()" class="px-3 py-1.5 text-xs bg-gray-200 text-gray-700 rounded-lg">Batal</button>
+          <button type="submit" class="px-3 py-1.5 text-xs bg-berguru text-white rounded-lg">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PRATINJAU DOKUMEN RPM (A4 PREVIEW) -->
+  <div id="modalPreviewRPM" class="fixed inset-0 bg-black/70 z-50 overflow-y-auto hidden">
+    <div class="min-h-screen px-4 py-8 flex flex-col items-center">
+      
+      <!-- Action Toolbar -->
+      <div class="bg-white p-3 rounded-lg shadow-lg mb-6 flex items-center space-x-3 no-print">
+        <button onclick="downloadAsWord()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span>Unduh Versi Word (.doc)</span>
+        </button>
+        <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center space-x-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          <span>Cetak / Simpan PDF</span>
+        </button>
+        <button onclick="closePreviewModal()" class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-xs font-semibold">
+          Tutup Pratinjau
+        </button>
+      </div>
+
+      <!-- Dokumen A4 Terstruktur (Presisi Kiri 1.5 cm, Atas/Kanan/Bawah 1.0 cm) -->
+      <div id="previewA4Content" class="a4-page">
+        <!-- Rendered Dynamically -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    // Global State Application
+    let currentUser = null;
+    let currentRPMData = null;
+
+    // Direct MOCK Mode Detection (Jika dijalankan di luar Apps Script)
+    const IS_GAS_ENV = typeof google !== 'undefined' && google.script && google.script.run;
+
+    // Toast Notification Helper
+    function showToast(title, message, isError = false) {
+      const toast = document.getElementById('toast');
+      const toastTitle = document.getElementById('toastTitle');
+      const toastMessage = document.getElementById('toastMessage');
+      
+      toastTitle.innerText = title;
+      toastMessage.innerText = message;
+      
+      if (isError) {
+        toast.classList.remove('border-berguru');
+        toast.classList.add('border-red-500');
+      } else {
+        toast.classList.remove('border-red-500');
+        toast.classList.add('border-berguru');
+      }
+      
+      toast.classList.remove('hidden', 'translate-x-full');
+      setTimeout(() => closeToast(), 5000);
+    }
+
+    function closeToast() {
+      document.getElementById('toast').classList.add('translate-x-full');
+    }
+
+    function showLoading(show) {
+      document.getElementById('loadingSpinner').classList.toggle('hidden', !show);
+    }
+
+    function switchAuthTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('formLogin').classList.toggle('hidden', !isLogin);
+      document.getElementById('formRegister').classList.toggle('hidden', isLogin);
+      
+      document.getElementById('tabLogin').className = isLogin 
+        ? "w-1/2 py-2 text-center text-sm font-semibold border-b-2 border-berguru text-berguru"
+        : "w-1/2 py-2 text-center text-sm font-semibold text-gray-400 hover:text-berguru";
+        
+      document.getElementById('tabRegister').className = !isLogin 
+        ? "w-1/2 py-2 text-center text-sm font-semibold border-b-2 border-berguru text-berguru"
+        : "w-1/2 py-2 text-center text-sm font-semibold text-gray-400 hover:text-berguru";
+    }
+
+    // Handler Registration
+    function handleRegister(e) {
+      e.preventDefault();
+      const email = document.getElementById('regEmail').value.trim();
+      showLoading(true);
+
+      if (IS_GAS_ENV) {
+        google.script.run
+          .withSuccessHandler(onRegisterSuccess)
+          .withFailureHandler(onApiError)
+          .registerUser(email);
+      } else {
+        // Mock Response Browser Test
+        setTimeout(() => {
+          showLoading(false);
+          const prefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+          const mockUsername = prefix + "@berguru.id";
+          const mockToken = "B" + Math.floor(1000 + Math.random() * 9000);
+          
+          alert(`Pendaftaran Berhasil!\n\nUsername Anda: ${mockUsername}\nToken Akses Anda: ${mockToken}\n\nSilakan gunakan username dan token ini untuk login.`);
+          switchAuthTab('login');
+          document.getElementById('loginUsername').value = mockUsername;
+          document.getElementById('loginToken').value = mockToken;
+        }, 800);
+      }
+    }
+
+    function onRegisterSuccess(res) {
+      showLoading(false);
+      if (res.success) {
+        alert(`${res.message}\n\nUsername Anda: ${res.username}\nToken Akses Anda: ${res.token}\n\nCatatan: Simpan token ini dengan baik. Gunakan Username @berguru.id Anda untuk masuk.`);
+        switchAuthTab('login');
+        document.getElementById('loginUsername').value = res.username;
+        document.getElementById('loginToken').value = res.token;
+      } else {
+        showToast('Pendaftaran Gagal', res.message, true);
+      }
+    }
+
+    // Handler Login
+    function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value.trim();
+      const token = document.getElementById('loginToken').value.trim();
+
+      showLoading(true);
+
+      if (IS_GAS_ENV) {
+        google.script.run
+          .withSuccessHandler(onLoginSuccess)
+          .withFailureHandler(onApiError)
+          .loginUser(username, token);
+      } else {
+        // Mock Login Browser
+        setTimeout(() => {
+          showLoading(false);
+          if (username === 'berguruid.official@gmail.com' && token === 'ber21') {
+            onLoginSuccess({ success: true, role: 'admin', username: username });
+          } else if (username.endsWith('@berguru.id')) {
+            onLoginSuccess({ 
+              success: true, 
+              role: 'user', 
+              username: username, 
+              namaGuru: 'Siti Rahmawati, S.Pd.', 
+              namaSekolah: 'SD Negeri 1 Merdeka' 
+            });
+          } else {
+            showToast('Gagal Masuk', 'Username harus berakhiran @berguru.id dan terdaftar dalam database.', true);
+          }
+        }, 800);
+      }
+    }
+
+    function onLoginSuccess(res) {
+      showLoading(false);
+      if (res.success) {
+        currentUser = res;
+        document.getElementById('authContainer').classList.add('hidden');
+        document.getElementById('mainAppContainer').classList.remove('hidden');
+
+        document.getElementById('navUserDisplay').innerText = res.username;
+        document.getElementById('navRoleDisplay').innerText = res.role === 'admin' ? 'Administrator' : 'Pengguna Terverifikasi';
+
+        if (res.role === 'admin') {
+          document.getElementById('adminView').classList.remove('hidden');
+          document.getElementById('userView').classList.add('hidden');
+          loadAdminDashboard();
+        } else {
+          document.getElementById('adminView').classList.add('hidden');
+          document.getElementById('userView').classList.remove('hidden');
+          
+          // Cek jika profil nama/sekolah belum ada
+          if (!res.namaGuru || !res.namaSekolah) {
+            document.getElementById('modalProfile').classList.remove('hidden');
+          } else {
+            setFormUserDefault(res.namaGuru, res.namaSekolah);
+          }
+        }
+      } else {
+        showToast('Login Gagal', res.message, true);
+      }
+    }
+
+    function handleSaveProfile(e) {
+      e.preventDefault();
+      const namaGuru = document.getElementById('profNamaGuru').value.trim();
+      const namaSekolah = document.getElementById('profNamaSekolah').value.trim();
+
+      showLoading(true);
+      if (IS_GAS_ENV) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            showLoading(false);
+            if (res.success) {
+              currentUser.namaGuru = namaGuru;
+              currentUser.namaSekolah = namaSekolah;
+              document.getElementById('modalProfile').classList.add('hidden');
+              setFormUserDefault(namaGuru, namaSekolah);
+              showToast('Profil Disimpan', 'Profil Anda telah dikunci untuk pembuatan RPM.');
+            }
+          })
+          .saveUserProfile(currentUser.username, namaGuru, namaSekolah);
+      } else {
+        showLoading(false);
+        currentUser.namaGuru = namaGuru;
+        currentUser.namaSekolah = namaSekolah;
+        document.getElementById('modalProfile').classList.add('hidden');
+        setFormUserDefault(namaGuru, namaSekolah);
+      }
+    }
+
+    function setFormUserDefault(namaGuru, namaSekolah) {
+      document.getElementById('inputNamaGuru').value = namaGuru;
+      document.getElementById('inputSekolah').value = namaSekolah;
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      document.getElementById('mainAppContainer').classList.add('hidden');
+      document.getElementById('authContainer').classList.remove('hidden');
+      document.getElementById('formLogin').reset();
+    }
+
+    // Dynamic Select Fase & Kelas
+    function handleFaseChange() {
+      const fase = document.getElementById('selectFase').value;
+      const selectKelas = document.getElementById('selectKelas');
+      selectKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+
+      if (fase === 'Fase A') {
+        selectKelas.innerHTML += '<option value="Kelas 1">Kelas 1</option><option value="Kelas 2">Kelas 2</option>';
+      } else if (fase === 'Fase B') {
+        selectKelas.innerHTML += '<option value="Kelas 3">Kelas 3</option><option value="Kelas 4">Kelas 4</option>';
+      } else if (fase === 'Fase C') {
+        selectKelas.innerHTML += '<option value="Kelas 5">Kelas 5</option><option value="Kelas 6">Kelas 6</option>';
+      }
+    }
+
+    function updateCPInfo() {
+      const mapel = document.getElementById('selectMapel').value;
+      const cpBadge = document.getElementById('cpInfoBadge');
+      const cpText = document.getElementById('cpInfoText');
+
+      if (!mapel) {
+        cpBadge.classList.add('hidden');
+        return;
+      }
+
+      cpBadge.classList.remove('hidden');
+      if (mapel === "Pendidikan Agama dan Budi Pekerti (PAI)") {
+        cpText.innerText = "Keputusan Kepala Badan Kebijakan Pendidikan Dasar dan Menengah (BKPDM) Nomor 020 Tahun 2026 & Referensi https://buku.kemendikdasmen.go.id/";
+      } else {
+        cpText.innerText = "Keputusan Kepala BSKAP Nomor 046/H/KR/2025 & Referensi https://buku.kemendikdasmen.go.id/";
+      }
+    }
+
+    // Dashboard Admin Loader
+    function loadAdminDashboard() {
+      showLoading(true);
+      if (IS_GAS_ENV) {
+        google.script.run
+          .withSuccessHandler(renderAdminTable)
+          .withFailureHandler(onApiError)
+          .getAdminDashboardData(currentUser.username, "ber21");
+      } else {
+        showLoading(false);
+        renderAdminTable({
+          success: true,
+          users: [
+            { rowIndex: 2, noUrut: 1, tglTerdaftar: '25/09/2026 10:15', email: 'guru.sd@gmail.com', username: 'guru.sd@berguru.id', token: 'B398A', status: 'Aktif', namaGuru: 'Siti Rahmawati, S.Pd.', namaSekolah: 'SD Negeri 1 Merdeka' }
+          ]
+        });
+      }
+    }
+
+    function renderAdminTable(res) {
+      showLoading(false);
+      const tbody = document.getElementById('adminTableBody');
+      tbody.innerHTML = '';
+
+      if (res.success && res.users.length > 0) {
+        res.users.forEach(u => {
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-gray-50 border-b";
+          tr.innerHTML = `
+            <td class="p-3">${u.noUrut}</td>
+            <td class="p-3">${u.tglTerdaftar}</td>
+            <td class="p-3 font-medium">${u.namaGuru}</td>
+            <td class="p-3">${u.namaSekolah}</td>
+            <td class="p-3 font-mono text-berguru font-semibold">${u.username}</td>
+            <td class="p-3 font-mono font-bold">${u.token}</td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${u.status === 'Aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                ${u.status}
+              </span>
+            </td>
+            <td class="p-3 text-center space-x-1">
+              <button onclick="openEditModal(${u.rowIndex}, '${u.status}', '${u.namaGuru}', '${u.namaSekolah}')" class="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">Edit</button>
+              <button onclick="deleteUserRow(${u.rowIndex})" class="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200">Hapus</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-500">Belum ada data pengguna.</td></tr>';
+      }
+    }
+
+    function openEditModal(rowIndex, status, namaGuru, namaSekolah) {
+      document.getElementById('editRowIndex').value = rowIndex;
+      document.getElementById('editStatus').value = status;
+      document.getElementById('editNamaGuru').value = namaGuru === 'Belum diisi' ? '' : namaGuru;
+      document.getElementById('editNamaSekolah').value = namaSekolah === 'Belum diisi' ? '' : namaSekolah;
+      document.getElementById('modalEditUser').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      document.getElementById('modalEditUser').classList.add('hidden');
+    }
+
+    function handleAdminSaveUser(e) {
+      e.preventDefault();
+      const rowIndex = document.getElementById('editRowIndex').value;
+      const status = document.getElementById('editStatus').value;
+      const namaGuru = document.getElementById('editNamaGuru').value;
+      const namaSekolah = document.getElementById('editNamaSekolah').value;
+
+      showLoading(true);
+      if (IS_GAS_ENV) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            closeEditModal();
+            loadAdminDashboard();
+            showToast('Berhasil', res.message);
+          })
+          .adminUpdateUser(currentUser.username, "ber21", rowIndex, status, namaGuru, namaSekolah);
+      } else {
+        closeEditModal();
+        showLoading(false);
+        showToast('Berhasil', 'Data pengguna berhasil diperbarui.');
+      }
+    }
+
+    function deleteUserRow(rowIndex) {
+      if (confirm('Apakah Anda yakin ingin menghapus akun pengguna ini?')) {
+        showLoading(true);
+        if (IS_GAS_ENV) {
+          google.script.run
+            .withSuccessHandler((res) => {
+              loadAdminDashboard();
+              showToast('Berhasil', res.message);
+            })
+            .adminDeleteUser(currentUser.username, "ber21", rowIndex);
+        } else {
+          showLoading(false);
+          showToast('Berhasil', 'Akun berhasil dihapus.');
+        }
+      }
+    }
+
+    // Generator Dokumen RPM Handler
+    function handleGenerateRPM(e) {
+      e.preventDefault();
+      const formData = {
+        instansi: document.getElementById('inputSekolah').value,
+        namaGuru: document.getElementById('inputNamaGuru').value,
+        nipGuru: document.getElementById('inputNipGuru').value,
+        namaKepala: document.getElementById('inputNamaKepala').value,
+        nipKepala: document.getElementById('inputNipKepala').value,
+        alokasiWaktu: document.getElementById('inputAlokasi').value,
+        fase: document.getElementById('selectFase').value,
+        kelas: document.getElementById('selectKelas').value,
+        mapel: document.getElementById('selectMapel').value,
+        topik: document.getElementById('inputTopik').value
+      };
+
+      showLoading(true);
+      if (IS_GAS_ENV) {
+        google.script.run
+          .withSuccessHandler(renderRPMPreview)
+          .withFailureHandler(onApiError)
+          .generateRPMContent(formData);
+      } else {
+        setTimeout(() => {
+          showLoading(false);
+          let acuan = formData.mapel === "Pendidikan Agama dan Budi Pekerti (PAI)"
+            ? "Keputusan Kepala Badan Kebijakan Pendidikan Dasar dan Menengah (BKPDM) Nomor 020 Tahun 2026"
+            : "Keputusan Kepala BSKAP Nomor 046/H/KR/2025";
+            
+          renderRPMPreview({
+            success: true,
+            data: { ...formData, acuanCP: acuan, referensiBuku: "https://buku.kemendikdasmen.go.id/" }
+          });
+        }, 600);
+      }
+    }
+
+    function renderRPMPreview(res) {
+      showLoading(false);
+      if (!res.success) {
+        showToast('Gagal', 'Gagal memproses dokumen RPM.', true);
+        return;
+      }
+
+      currentRPMData = res.data;
+      const d = res.data;
+
+      const htmlContent = `
+        <div class="rpm-doc-title">
+          RENCANA PELAKSANAAN PEMBELAJARAN (RPM) KURIKULUM MERDEKA<br>
+          <span style="font-size: 10pt; font-weight: 500; text-transform: none; color: #333;">Pendekatan Deep Learning (Mindful, Meaningful, & Joyful Learning)</span>
+        </div>
+
+        <table class="rpm-meta-table">
+          <tr>
+            <td width="20%"><strong>Satuan Pendidikan</strong></td>
+            <td width="2%">:</td>
+            <td width="38%">${d.instansi}</td>
+            <td width="18%"><strong>Fase / Kelas</strong></td>
+            <td width="2%">:</td>
+            <td width="20%">${d.fase} / ${d.kelas}</td>
+          </tr>
+          <tr>
+            <td><strong>Mata Pelajaran</strong></td>
+            <td>:</td>
+            <td>${d.mapel}</td>
+            <td><strong>Alokasi Waktu</strong></td>
+            <td>:</td>
+            <td>${d.alokasiWaktu}</td>
+          </tr>
+          <tr>
+            <td><strong>Topik / Materi</strong></td>
+            <td>:</td>
+            <td colspan="4"><strong>${d.topik}</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Acuan CP Resmi</strong></td>
+            <td>:</td>
+            <td colspan="4" style="font-size: 8.5pt; color: #1e293b;">${d.acuanCP}</td>
+          </tr>
+          <tr>
+            <td><strong>Referensi Buku</strong></td>
+            <td>:</td>
+            <td colspan="4" style="font-size: 8.5pt; color: #11009e;"><a href="${d.referensiBuku}" target="_blank">${d.referensiBuku}</a></td>
+          </tr>
+        </table>
+
+        <div class="rpm-section-header">I. TUJUAN PEMBELAJARAN</div>
+        <div style="font-size: 9.5pt; margin-left: 10px; text-align: justify; line-height: 1.4;">
+          Melalui pendekatan <em>Deep Learning</em>, peserta didik mampu memahami konsep dasar <strong>${d.topik}</strong> secara mendalam, merefleksikan penerapannya dalam kehidupan sehari-hari, serta terampil menyelesaikan masalah relevan dengan rasa ingin tahu dan percaya diri.
+        </div>
+
+        <div class="rpm-section-header">II. KEGIATAN PEMBELAJARAN (DEEP LEARNING)</div>
+        <table class="rpm-activities-table">
+          <thead>
+            <tr>
+              <th width="20%">Elemen Deep Learning</th>
+              <th width="80%">Rincian Alur Kegiatan Pembelajaran</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Mindful Learning</strong><br><span style="font-size: 8pt; color: #64748b;">(Kesadaran & Kehadiran Penuh)</span></td>
+              <td style="text-align: justify;">
+                1. Guru membuka pembelajaran dengan salam hangat, berdoa bersama, dan mengecek kesiapan peserta didik.<br>
+                2. Guru melakukan latihan pernapasan singkat (STOP) untuk menghadirkan fokus penuh.<br>
+                3. Guru menyampaikan pemantik awal terkait materi <strong>${d.topik}</strong> untuk memicu perhatian aktif.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Meaningful Learning</strong><br><span style="font-size: 8pt; color: #64748b;">(Kebermaknaan Konsep)</span></td>
+              <td style="text-align: justify;">
+                1. Peserta didik mengamati contoh atau media konkret yang relevan dengan topik <strong>${d.topik}</strong>.<br>
+                2. Peserta didik berdiskusi dalam kelompok kecil untuk mendalami konsep inti, mengaitkannya dengan pengalaman nyata.<br>
+                3. Guru memberikan bimbingan terarah (scaffolding) untuk memperkuat pemahaman konseptual yang mendalam.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Joyful Learning</strong><br><span style="font-size: 8pt; color: #64748b;">(Pembelajaran Menyenangkan)</span></td>
+              <td style="text-align: justify;">
+                1. Peserta didik menyajikan hasil diskusi kelompok melalui metode permainan peran, kuis interaktif, atau presentasi singkat.<br>
+                2. Guru memberikan apresiasi dan umpan balik positif atas keberanian peserta didik.<br>
+                3. Kegiatan ditutup dengan refleksi diri gembira dan penyimpulan materi bersama.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="rpm-section-header">III. ASESMEN / PENILAIAN</div>
+        <div style="font-size: 9.5pt; margin-left: 10px; line-height: 1.4;">
+          <strong>1. Sikap (Formatif):</strong> Observasi keterlibatan aktif dan kedisiplinan selama proses pembelajaran.<br>
+          <strong>2. Pengetahuan (Formatif):</strong> Pertanyaan lisan/tulisan singkat mengenai pemahaman topik ${d.topik}.<br>
+          <strong>3. Keterampilan (Sumatif Process):</strong> Unjuk kerja penyajian diskusi kelompok.
+        </div>
+
+        <!-- Blok Tanda Tangan Pengesahan -->
+        <table class="rpm-signature-table">
+          <tr>
+            <td>
+              Mengetahui,<br>
+              Kepala Sekolah ${d.instansi}<br><br><br><br><br>
+              <strong><u>${d.namaKepala}</u></strong><br>
+              NIP. ${d.nipKepala}
+            </td>
+            <td>
+              Mengetahui,<br>
+              Guru Mata Pelajaran / Kelas<br><br><br><br><br>
+              <strong><u>${d.namaGuru}</u></strong><br>
+              NIP. ${d.nipGuru}
+            </td>
+          </tr>
+        </table>
+
+        <div class="rpm-footer-tag">
+          Dokumen ini disusun secara otomatis melalui RPM SD Generator — berguru.id
+        </div>
+      `;
+
+      document.getElementById('previewA4Content').innerHTML = htmlContent;
+      document.getElementById('modalPreviewRPM').classList.remove('hidden');
+    }
+
+    function closePreviewModal() {
+      document.getElementById('modalPreviewRPM').classList.add('hidden');
+    }
+
+    // Fungsi Unduh versi Word (.doc) Presisi A4
+    function downloadAsWord() {
+      if (!currentRPMData) return;
+      const content = document.getElementById('previewA4Content').innerHTML;
+      
+      const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>RPM Dokumen</title>
+      <style>
+        @page { size: 21.0cm 29.7cm; margin: 1.0cm 1.0cm 1.0cm 1.5cm; }
+        body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+        .rpm-doc-title { text-align: center; font-weight: bold; font-size: 13pt; color: #11009e; border-bottom: 2px solid #11009e; padding-bottom: 4px; margin-bottom: 12px; }
+        .rpm-meta-table, .rpm-activities-table, .rpm-signature-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 9.5pt; }
+        .rpm-meta-table td { padding: 3px 6px; vertical-align: top; }
+        .rpm-section-header { background-color: #11009e; color: #ffffff; font-weight: bold; font-size: 10.5pt; padding: 4px 8px; margin-top: 10px; margin-bottom: 6px; }
+        .rpm-activities-table th, .rpm-activities-table td { border: 1px solid #cbd5e1; padding: 6px; vertical-align: top; }
+        .rpm-activities-table th { background-color: #f1f5f9; font-weight: bold; text-align: center; }
+        .rpm-signature-table { margin-top: 30px; page-break-inside: avoid; }
+        .rpm-signature-table td { text-align: center; width: 50%; vertical-align: top; }
+        .rpm-footer-tag { text-align: right; font-size: 8.5pt; color: #64748b; margin-top: 15px; border-top: 1px dashed #cbd5e1; padding-top: 4px; font-style: italic; }
+      </style>
+      </head><body>`;
+      
+      const footer = "</body></html>";
+      const sourceHTML = header + content + footer;
+
+      const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RPM_${currentRPMData.mapel.replace(/[^a-zA-Z0-9]/g, '_')}_${currentRPMData.kelas.replace(/[^a-zA-Z0-9]/g, '_')}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function onApiError(err) {
+      showLoading(false);
+      showToast('Terjadi Kesalahan Server', err.message || 'Gagal memproses permintaan.', true);
+    }
+  </script>
+
+  <!-- ATURAN KHUSUS FOOTER BERGURU.ID (WAJIB DISEMBUNYIKAN/OBFUSCATED) -->
+  <script>
+    (function(){
+      var d = document.createElement('div');
+      // Base64 dari elemen footer Powered by berguru.id
+      var h = "PGRpdiBzdHlsZT0idGV4dC1hbGlnbjogY2VudGVyOyBwYWRkaW5nOiAxNXB4OyBmb250LXNpemU6IDEycHg7IGNvbG9yOiAjNzc3OyBmb250LWZhbWlseTogJ1BvcHBpbnMnLCBzYW5zLXNlcmlmOyBiYWNrZ3JvdW5kOiAjZjhmOGY4OyBtYXJnaW4tdG9wOiAzMHB4OyBib3JkZXItdG9wOiAxcHggc29saWQgI2VlZTsiPlBvd2VyZWQgYnkgPGEgaHJlZj0iaHR0cHM6Ly9iZXJndXJ1LmlkIiB0YXJnZXQ9Il9ibGFuayIgc3R5bGU9ImNvbG9yOiAjMTEwMDllOyB0ZXh0LWRlY29yYXRpb246IG5vbmU7IGZvbnQtd2VpZ2h0OiBib2xkOyI+YmVyZ3VydS5pZDwvYT48L2Rpdj4=";
+      d.innerHTML = atob(h);
+      document.body.appendChild(d);
+    })();
+  </script>
+</body>
+</html>
